@@ -98,6 +98,64 @@ async function mealsRoutes(app: FastifyInstance) {
 
     return reply.status(201).send('Meals created')
   })
+
+  app.get(
+    '/metrics',
+    { preHandler: [checkIfUserExists] },
+    async (req, reply) => {
+      const totalMeals = await knex('meals')
+        .where({ user_id: req.user?.id })
+        .count('id', { as: 'total' })
+        .first()
+
+      const totalMealsOnDiet = await knex('meals')
+        .where({
+          user_id: req.user?.id,
+          isOnDiet: true,
+        })
+        .count('id', { as: 'total' })
+        .first()
+
+      const totalMealsOffDiet = await knex('meals')
+        .where({
+          user_id: req.user?.id,
+          isOnDiet: false,
+        })
+        .count('id', { as: 'total' })
+        .first()
+
+      const onDietArray = await knex
+        .select('isOnDiet')
+        .from('meals')
+        .where({ user_id: req.user?.id })
+
+      const bestOnDietSequence = onDietArray.reduce(
+        (obj, meal) => {
+          if (meal.isOnDiet) {
+            obj.currentSequence += 1
+          } else {
+            obj.currentSequence = 0
+          }
+
+          if (obj.currentSequence > obj.bestSequence) {
+            obj.bestSequence = obj.currentSequence
+          }
+
+          return obj
+        },
+        { bestSequence: 0, currentSequence: 0 },
+      )
+
+      return reply.send([
+        {
+          totalMeals: totalMeals?.total,
+          totalMealsOnDiet: totalMealsOnDiet?.total,
+          totalMealsOffDiet: totalMealsOffDiet?.total,
+          bestOnDietSequence: bestOnDietSequence.bestSequence,
+        },
+      ])
+    },
+  )
 }
 
 export default mealsRoutes
