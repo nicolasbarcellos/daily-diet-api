@@ -10,8 +10,6 @@ async function mealsRoutes(app: FastifyInstance) {
       .where('user_id', req.user?.id)
       .orderBy('created_at', 'desc')
 
-    console.log(req.user)
-
     return { meals }
   })
 
