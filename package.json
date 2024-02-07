@@ -23,7 +23,7 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "test": "vitest",
-    "build": "tsup src --out-dir build",
+    "build": "tsup src --out-dir buildexi",
     "lint": "eslit src --ext .ts --fix"
   }
 }
