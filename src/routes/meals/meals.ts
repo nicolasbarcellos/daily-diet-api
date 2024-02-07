@@ -13,16 +13,20 @@ async function mealsRoutes(app: FastifyInstance) {
     return { meals }
   })
 
-  app.get('/:id', { preHandler: checkIfUserExists }, async (req) => {
+  app.get('/:id', { preHandler: checkIfUserExists }, async (req, reply) => {
     const getMealsParamsSchema = z.object({
       id: z.string().uuid(),
     })
 
     const { id } = getMealsParamsSchema.parse(req.params)
 
-    const meal = await knex('meals').where('id', id).select('*')
+    const meal = await knex('meals').where('id', id).first()
 
-    return meal
+    if (!meal) {
+      return reply.status(404).send({ error: 'Meal not found' })
+    }
+
+    return reply.send({ meal })
   })
 
   app.put('/:id', { preHandler: checkIfUserExists }, async (req, reply) => {
@@ -53,7 +57,7 @@ async function mealsRoutes(app: FastifyInstance) {
       return reply.status(400).send({ error: 'Meal not found' })
     }
 
-    return { mealUpdated }
+    return reply.status(204).send({ mealUpdated })
   })
 
   app.delete('/:id', { preHandler: checkIfUserExists }, async (req, reply) => {
